@@ -99,13 +99,15 @@ class KubernetesJob(object):
                         client.V1Container(
                             command=self._kwargs["command"],
                             termination_message_policy="FallbackToLogsOnError",
-                            ports=[]
-                            if self._kwargs["port"] is None
-                            else [
-                                client.V1ContainerPort(
-                                    container_port=int(self._kwargs["port"])
-                                )
-                            ],
+                            ports=(
+                                []
+                                if self._kwargs["port"] is None
+                                else [
+                                    client.V1ContainerPort(
+                                        container_port=int(self._kwargs["port"])
+                                    )
+                                ]
+                            ),
                             env=[
                                 client.V1EnvVar(name=k, value=str(v))
                                 for k, v in self._kwargs.get(
@@ -125,6 +127,7 @@ class KubernetesJob(object):
                                     ),
                                 )
                                 for k, v in {
+                                    "METAFLOW_KUBERNETES_NAMESPACE": "metadata.namespace",
                                     "METAFLOW_KUBERNETES_POD_NAMESPACE": "metadata.namespace",
                                     "METAFLOW_KUBERNETES_POD_NAME": "metadata.name",
                                     "METAFLOW_KUBERNETES_POD_ID": "metadata.uid",
