@@ -5,6 +5,8 @@ import time
 import importlib
 import functools
 import tempfile
+
+from subprocess import CalledProcessError
 from typing import Optional, Dict, ClassVar
 
 from metaflow.exception import MetaflowNotFound
@@ -25,6 +27,8 @@ def handle_timeout(
         Temporary file that stores runner attribute data.
     command_obj : CommandManager
         Command manager object that encapsulates the running command details.
+    file_read_timeout : int
+        Timeout for reading the file.
 
     Returns
     -------
@@ -39,10 +43,10 @@ def handle_timeout(
     """
     try:
         content = read_from_file_when_ready(
-            tfp_runner_attribute.name, timeout=file_read_timeout
+            tfp_runner_attribute.name, command_obj, timeout=file_read_timeout
         )
         return content
-    except TimeoutError as e:
+    except (CalledProcessError, TimeoutError) as e:
         stdout_log = open(command_obj.log_files["stdout"]).read()
         stderr_log = open(command_obj.log_files["stderr"]).read()
         command = " ".join(command_obj.command)
@@ -397,6 +401,9 @@ class DeployerImpl(object):
             self.name = content.get("name")
             self.flow_name = content.get("flow_name")
             self.metadata = content.get("metadata")
+            # Additional info is used to pass additional deployer specific information.
+            # It is used in non-OSS deployers (extensions).
+            self.additional_info = content.get("additional_info", {})
 
             if command_obj.process.returncode == 0:
                 deployed_flow = DeployedFlow(deployer=self)
