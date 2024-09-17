@@ -12,7 +12,7 @@ from metaflow.metadata import MetaDatum
 from metaflow.metaflow_environment import InvalidEnvironmentException
 from metaflow.util import get_metaflow_root
 
-from ... import INFO_FILE
+from ...info_file import INFO_FILE
 
 
 class CondaStepDecorator(StepDecorator):
@@ -353,6 +353,12 @@ class CondaFlowDecorator(FlowDecorator):
     def flow_init(
         self, flow, graph, environment, flow_datastore, metadata, logger, echo, options
     ):
+        # NOTE: Important for extensions implementing custom virtual environments.
+        # Without this steps will not have an implicit conda step decorator on them unless the environment adds one in its decospecs.
+        from metaflow import decorators
+
+        decorators._attach_decorators(flow, ["conda"])
+
         # @conda uses a conda environment to create a virtual environment.
         # The conda environment can be created through micromamba.
         _supported_virtual_envs = ["conda"]
