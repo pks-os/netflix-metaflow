@@ -253,7 +253,33 @@ class Micromamba(object):
             try:
                 output = json.loads(e.output)
                 err = []
+                v_pkgs = ["__cuda", "__glibc"]
                 for error in output.get("solver_problems", []):
+                    # raise a specific error message for virtual package related errors
+                    match = next((p for p in v_pkgs if p in error), None)
+                    if match is not None:
+                        vpkg_name = match[2:]
+                        # try to strip version from error msg which are of the format:
+                        # nothing provides <__vpkg> >=2.17,<3.0.a0 needed by <pkg_name>
+                        try:
+                            vpkg_version = error[
+                                len("nothing provides %s " % match) : error.index(
+                                    " needed by"
+                                )
+                            ]
+                        except ValueError:
+                            vpkg_version = None
+                        raise MicromambaException(
+                            "Please set the environment variable CONDA_OVERRIDE_{var} to a specific version{version} of {name}.\n"
+                            "Here is an example of supplying environment variables through the command line -\n\n"
+                            "CONDA_OVERRIDE_{var}=<{name}-version> python flow.py <args>".format(
+                                var=vpkg_name.upper(),
+                                version=(
+                                    "" if not vpkg_version else (" (%s)" % vpkg_version)
+                                ),
+                                name=vpkg_name,
+                            ),
+                        )
                     err.append(error)
                 raise MicromambaException(
                     msg.format(
