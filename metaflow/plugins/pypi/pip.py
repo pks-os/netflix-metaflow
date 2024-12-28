@@ -4,7 +4,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import time
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain, product
 from urllib.parse import unquote
@@ -107,9 +106,8 @@ class Pip(object):
             except PipPackageNotFound as ex:
                 # pretty print package errors
                 raise PipException(
-                    "Could not find a binary distribution for %s \n"
-                    "for the platform %s\n\n"
-                    "Note that ***@pypi*** does not currently support source distributions"
+                    "Unable to find a binary distribution compatible with %s for %s.\n\n"
+                    "Note: ***@pypi*** does not currently support source distributions"
                     % (ex.package_spec, platform)
                 )
 
